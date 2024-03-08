@@ -1,8 +1,10 @@
 package edu.jhu.espresso.server.protocol;
 
 import edu.jhu.espresso.server.domain.*;
-import edu.jhu.espresso.server.domain.builder.CaseDetailsBuilder;
 import edu.jhu.espresso.server.domain.builder.GameStartBuilder;
+import edu.jhu.espresso.server.domain.gameEvents.GameStart;
+import edu.jhu.espresso.server.domain.gamepieces.Weapon;
+import edu.jhu.espresso.server.domain.gamepieces.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +37,13 @@ public class ClueLessServerGameProtocol
                     .collect(Collectors.toList());
 
             playing = new ClueLessTurnProtocol(waitingPlayers, activePlayer, game).executeTurn();
-            activePlayerIndex = (activePlayerIndex + 1) % players.size();
+
+            //Increment active player index using do/while to skip inactive players.
+            do {
+                activePlayerIndex = (activePlayerIndex + 1) % players.size();
+            }
+            while(!players.get(activePlayerIndex).getActiveStatus());
+
         }
     }
 
@@ -59,15 +67,20 @@ public class ClueLessServerGameProtocol
         responses.forEach(CompletableFuture::join);
     }
 
-    public static void broadcast(Game game, String announcement, List<Player> players)
+    public static void broadcastSuggestedPlayer(Game game, String announcement, List<Player> players, CharacterNames characterNames)
     {
-        TurnStart turnStart = new TurnStart(ClueLessProtocolType.INFORMATIONAL, game.getLocations(), announcement);
+        TurnStart turnStart = new TurnStart(ClueLessProtocolType.INFORMATIONAL, game.getLocations(), announcement, characterNames);
         players.stream().map(player -> player.asyncWriteInstanceAndExpectType(
-                                turnStart,
+                        turnStart,
                         TurnStart.class)
                 )
                 .map(CompletableFuture::join)
                 .collect(Collectors.toList());
+    }
+
+    public static void broadcast(Game game, String announcement, List<Player> players)
+    {
+        broadcastSuggestedPlayer(game, announcement, players, null);
     }
 
     public GameStart gameStartForPlayer(Player player)
@@ -84,11 +97,19 @@ public class ClueLessServerGameProtocol
             card.getCharacterName().ifPresent(characterNamesList::add);
         }
 
+        List<String> extraCardsNames = new ArrayList<>();
+        for(Card card : notebook.getKnownCards())
+        {
+            extraCardsNames.add(card.getName());
+        }
+
         return GameStartBuilder.aGameStart()
                 .withCharacterNamesList(characterNamesList)
                 .withRoomNamesList(roomNamesList)
                 .withWeapons(weapons)
                 .withCharacterNames(player.getCharacter().getName())
+                .withExtraCardsNames(extraCardsNames)
+                .withNumberOfPlayers(players.size())
                 .build();
     }
 }

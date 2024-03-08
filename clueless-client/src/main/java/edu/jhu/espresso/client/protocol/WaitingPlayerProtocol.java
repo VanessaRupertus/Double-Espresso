@@ -1,23 +1,20 @@
 package edu.jhu.espresso.client.protocol;
 
-import edu.jhu.espresso.client.ClueLessClient;
-import edu.jhu.espresso.client.domain.GameBoard;
-import edu.jhu.espresso.client.domain.Player;
-import edu.jhu.espresso.client.domain.TurnStart;
-
-import java.util.Random;
+import edu.jhu.espresso.client.domain.GameEvents.TurnStart;
+import edu.jhu.espresso.client.fx.GameboardController;
 
 class WaitingPlayerProtocol implements ClueLessProtocol
 {
-    private final ClueLessClient client;
+    private final GameboardController gameboardController;
 
-    public WaitingPlayerProtocol(ClueLessClient client)
+    public WaitingPlayerProtocol(GameboardController gameboardController)
     {
-        this.client = client;
+        this.gameboardController = gameboardController;
     }
 
     @Override
     public void execute(TurnStart turnStart)
     {
+        gameboardController.setDisableForAllButtons(true);
     }
 }

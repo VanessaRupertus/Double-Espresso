@@ -1,4 +1,8 @@
 package edu.jhu.espresso.server.domain;
+import edu.jhu.espresso.server.domain.gameEvents.GameTimer;
+import edu.jhu.espresso.server.domain.gameEvents.MoveChoice;
+import edu.jhu.espresso.server.domain.gamepieces.*;
+
 import java.util.*;
 public class Game {
 
@@ -93,6 +97,16 @@ public class Game {
     public void applyMoveChoice(MoveChoice moveChoice, CharacterNames characterNames)
     {
         gameBoard.moveCharacter(characterNames, Location.fromLocationName(moveChoice.getMove()));
+
+        Location thisLoc = gameBoard.getCharacterLocation(characterNames);
+
+        this.gameBoard.setHallwayFullByName(thisLoc.getLocationName());
+
     }
+
+
 }
+
+
+
 
